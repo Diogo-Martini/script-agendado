@@ -70,7 +70,7 @@ def gerar_intervalos_mensais(data_inicio, data_fim):
 
 # === CHAMADA DA API MÊS A MÊS ===
 client = Client(wsdl_url)
-data_inicio = datetime(2025, 5, 1)
+data_inicio = datetime(2024, 1, 1)
 data_fim = datetime.now()
 intervalos = gerar_intervalos_mensais(data_inicio, data_fim)
 
