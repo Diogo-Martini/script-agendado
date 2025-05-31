@@ -186,6 +186,9 @@ sheets_service.spreadsheets().values().update(
 
 print("✅ Planilha atualizada com sucesso!")
 
+# Data e hora atual formatada para exibir na planilha
+ultima_modificacao = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
 # Atualiza o cabeçalho (opcional, só se quiser garantir que esteja sempre)
 sheets_service.spreadsheets().values().update(
     spreadsheetId=SPREADSHEET_ID,
