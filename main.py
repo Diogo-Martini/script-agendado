@@ -185,3 +185,19 @@ sheets_service.spreadsheets().values().update(
 ).execute()
 
 print("✅ Planilha atualizada com sucesso!")
+
+# Atualiza o cabeçalho (opcional, só se quiser garantir que esteja sempre)
+sheets_service.spreadsheets().values().update(
+    spreadsheetId=SPREADSHEET_ID,
+    range='metadata!A1',
+    valueInputOption='RAW',
+    body={'values': [['ÚltimaAtualizacao']]}
+).execute()
+
+# Atualiza o valor do timestamp na célula A2
+sheets_service.spreadsheets().values().update(
+    spreadsheetId=SPREADSHEET_ID,
+    range='metadata!A2',
+    valueInputOption='RAW',
+    body={'values': [[ultima_modificacao]]}
+).execute()
