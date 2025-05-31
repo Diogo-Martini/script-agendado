@@ -70,7 +70,7 @@ def gerar_intervalos_mensais(data_inicio, data_fim):
 
 # === CHAMADA DA API MÊS A MÊS ===
 client = Client(wsdl_url)
-data_inicio = datetime(2024, 1, 1)
+data_inicio = datetime(2025, 5, 1)
 data_fim = datetime.now()
 intervalos = gerar_intervalos_mensais(data_inicio, data_fim)
 
@@ -190,6 +190,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 ultima_modificacao = datetime.now(ZoneInfo("America/Sao_Paulo"))
+ultima_modificacao_str = ultima_modificacao.strftime('%d/%m/%Y %H:%M:%S')
 
 # Atualiza o cabeçalho (opcional, só se quiser garantir que esteja sempre)
 sheets_service.spreadsheets().values().update(
