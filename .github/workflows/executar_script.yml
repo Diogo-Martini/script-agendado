@@ -27,4 +27,8 @@ jobs:
           echo '${{ secrets.GOOGLE_CREDS }}' > credenciais.json
 
       - name: ▶️ Executar o script
+        env:
+          USUARIO_WS: ${{ secrets.USUARIO_WS }}
+          SENHA_WS: ${{ secrets.SENHA_WS }}
         run: python main.py
+
