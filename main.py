@@ -11,7 +11,7 @@ from dateutil.relativedelta import relativedelta
 SERVICE_ACCOUNT_FILE = 'credenciais.json'
 SPREADSHEET_ID = '13_q2iGwqjpyY6JaCREiaJdeSqF9ZyRb7wvzGp9XcKNQ'
 SHEET_NAME = 'ConsultarOcorrencias'
-
+import os
 # === CONFIGURAÇÕES DO WEBSERVICE ===
 params_base = {
     'USUARIO_WS': os.getenv('USUARIO_WS'),
