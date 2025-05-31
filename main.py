@@ -15,8 +15,8 @@ SHEET_NAME = 'ConsultarOcorrencias'
 # === CONFIGURAÇÕES DO WEBSERVICE ===
 wsdl_url = 'https://intelligenza.multidadosti.com.br/_vmulti_c/webservices/index.php/?wsdl'
 params_base = {
-    'USUARIO_WS': 'diogo.martini',
-    'SENHA_WS': '@-Delorean01',
+    'USUARIO_WS': 'XXXXX',
+    'SENHA_WS': 'XXXXX',
     'TIPO_DATA': 'data_abertura',
     'RETORNO': 'json',
     'CAMPOS': (
