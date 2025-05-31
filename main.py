@@ -13,6 +13,7 @@ SPREADSHEET_ID = '13_q2iGwqjpyY6JaCREiaJdeSqF9ZyRb7wvzGp9XcKNQ'
 SHEET_NAME = 'ConsultarOcorrencias'
 import os
 # === CONFIGURAÇÕES DO WEBSERVICE ===
+wsdl_url = 'https://intelligenza.multidadosti.com.br/_vmulti_c/webservices/index.php/?wsdl'
 params_base = {
     'USUARIO_WS': os.getenv('USUARIO_WS'),
     'SENHA_WS': os.getenv('SENHA_WS'),
