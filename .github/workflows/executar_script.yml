@@ -1,33 +1,30 @@
-name: Executar script Python agendado
+name: Executar script Python a cada 30 minutos
 
 on:
   schedule:
-  - cron: "*/30 * * * *"
-  workflow_dispatch:       # Permite rodar manualmente também
+    - cron: '*/30 * * * *'  # Executa a cada 30 minutos
+  workflow_dispatch:         # Permite executar manualmente
 
 jobs:
-  rodar-script:
+  run-script:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Clonar repositório
+      - name: 🔄 Clonar o repositório
         uses: actions/checkout@v3
 
-      - name: Configurar Python
+      - name: 🐍 Configurar Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: 3.10
 
-      - name: Instalar dependências
+      - name: 📦 Instalar dependências
         run: |
-          pip install -r requirements.txt
+          pip install pandas zeep google-auth google-api-python-client python-dateutil
 
-      - name: Criar arquivo de credenciais do Google
+      - name: 🔐 Criar credenciais do Google
         run: |
-          echo "$GOOGLE_CREDS" > credenciais.json
+          echo '${{ secrets.GOOGLE_CREDS }}' > credenciais.json
 
-      - name: Executar script
-        env:
-          GOOGLE_CREDS: ${{ secrets.GOOGLE_CREDS }}
-        run: |
-          python main.py
+      - name: ▶️ Executar o script
+        run: python main.py
