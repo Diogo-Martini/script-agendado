@@ -2,7 +2,7 @@ name: Executar script Python a cada 30 minutos
 
 on:
   schedule:
-    - cron: '*/30 * * * *'  # Executa a cada 30 minutos
+    - cron: '*/50 * * * 1-5'  # Executa a cada 30 minutos
   workflow_dispatch:         # Permite executar manualmente
 
 jobs:
