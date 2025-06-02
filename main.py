@@ -70,8 +70,9 @@ def gerar_intervalos_mensais(data_inicio, data_fim):
 
 # === CHAMADA DA API MÊS A MÊS ===
 client = Client(wsdl_url)
-data_inicio = datetime(2024, 1, 1)
+# Calcula os últimos 14 meses
 data_fim = datetime.now()
+data_inicio = data_fim - relativedelta(months=14)
 intervalos = gerar_intervalos_mensais(data_inicio, data_fim)
 
 todos_dados = []
