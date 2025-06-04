@@ -15,9 +15,9 @@ SHEET_NAME = 'ConsultarOcorrencias'
 # === API SOAP CONFIG ===
 wsdl_url = 'https://intelligenza.multidadosti.com.br/_vmulti_c/webservices/index.php/?wsdl'
 params_base = {
-    'USUARIO_WS': 'diogo.martini',
-    'SENHA_WS': 'xxxxx',
-    'TIPO_DATA': 'xxxxxx',
+    'USUARIO_WS': os.getenv('USUARIO_WS'),
+    'SENHA_WS': os.getenv('SENHA_WS'),
+    'TIPO_DATA': 'ultima_modificacao',
     'RETORNO': 'json',
     'CAMPOS': (
         'data_abertura,prioridade_desc,numero,idcamposvariaveis_572,idocorrencia_parent,'
