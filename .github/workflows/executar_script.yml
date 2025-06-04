@@ -1,4 +1,4 @@
-name: Executar script Python a cada 8 minutos
+name: 1 - Executar script Python a cada 8 minutos
 
 on:
   schedule:
