@@ -8,7 +8,7 @@ import re
 from datetime import datetime, timedelta
 
 # === GOOGLE CONFIG ===
-SERVICE_ACCOUNT_FILE = 'C:\\Users\\diogo\\Desktop\\Gcloud\\credenciais.json'
+SERVICE_ACCOUNT_FILE = 'credenciais.json'
 SPREADSHEET_ID = '13_q2iGwqjpyY6JaCREiaJdeSqF9ZyRb7wvzGp9XcKNQ'
 SHEET_NAME = 'ConsultarOcorrencias'
 
