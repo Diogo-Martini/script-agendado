@@ -175,7 +175,7 @@ if not df_novo.empty:
         body={'values': [[ultima_modificacao]]}
     ).execute()
 
-    print(f"📅 Metadata atualizada: {ultima_mod}")
+    print(f"📅 Metadata atualizada: {ultima_modificacao}")
 else:
     print("⚠️ Nenhuma ocorrência nova/modificada hoje.")
 
