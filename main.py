@@ -178,19 +178,3 @@ if not df_novo.empty:
     print(f"📅 Metadata atualizada: {ultima_modificacao}")
 else:
     print("⚠️ Nenhuma ocorrência nova/modificada hoje.")
-
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-import time
-
-report_url = "https://lookerstudio.google.com/reporting/66ffcb7a-b341-49d0-8438-d7a66ddd9c0c/page/L7OLF"
-
-options = Options()
-options.headless = True  # roda em background
-driver = webdriver.Chrome(options=options)
-driver.get(report_url)
-
-# aguarda alguns segundos para garantir o carregamento
-import time
-time.sleep(10)
-driver.quit()
