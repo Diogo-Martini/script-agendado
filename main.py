@@ -16,8 +16,8 @@ SHEET_NAME = 'ConsultarOcorrencias'
 wsdl_url = 'https://intelligenza.multidadosti.com.br/_vmulti_c/webservices/index.php/?wsdl'
 params_base = {
     'USUARIO_WS': 'diogo.martini',
-    'SENHA_WS': 'Diedeia@01',
-    'TIPO_DATA': 'ultima_modificacao',
+    'SENHA_WS': 'xxxxx',
+    'TIPO_DATA': 'xxxxxx',
     'RETORNO': 'json',
     'CAMPOS': (
         'data_abertura,prioridade_desc,numero,idcamposvariaveis_572,idocorrencia_parent,'
