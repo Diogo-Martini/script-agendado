@@ -157,7 +157,7 @@ if not df_novo.empty:
     print(f"✅ Planilha atualizada com {len(df_final)} registros.")
 
     # === ATUALIZAR METADATA ===
-    ultima_mod = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    ultima_modificacao = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime('%Y-%m-%d %H:%M:%S')
     sheets_service.spreadsheets().values().update(
         spreadsheetId=SPREADSHEET_ID,
         range='metadata!A1',
