@@ -2,7 +2,7 @@ name: Executar script Python a cada 8 minutos
 
 on:
   schedule:
-    - cron: "10,30,50 * * * 1-5"
+    - cron: "10,40 * * * 1-5"
   workflow_dispatch:  # Permite executar manualmente
 
 
