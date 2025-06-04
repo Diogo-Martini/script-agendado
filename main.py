@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 SERVICE_ACCOUNT_FILE = 'credenciais.json'
 SPREADSHEET_ID = '13_q2iGwqjpyY6JaCREiaJdeSqF9ZyRb7wvzGp9XcKNQ'
 SHEET_NAME = 'ConsultarOcorrencias'
-
+import os
 # === API SOAP CONFIG ===
 wsdl_url = 'https://intelligenza.multidadosti.com.br/_vmulti_c/webservices/index.php/?wsdl'
 params_base = {
