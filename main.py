@@ -157,8 +157,8 @@ if not df_novo.empty:
     print(f"✅ Planilha atualizada com {len(df_final)} registros.")
 
     # === ATUALIZAR METADATA ===
-from datetime import datetime
-from zoneinfo import ZoneInfo
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
 
     ultima_modificacao = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime('%Y-%m-%d %H:%M:%S')
 
