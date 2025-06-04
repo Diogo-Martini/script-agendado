@@ -1,24 +1,23 @@
+# === IMPORTS ===
 import pandas as pd
 from zeep import Client
 import json
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 import re
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
+from datetime import datetime, timedelta
 
-# === CONFIGURAÇÕES DO GOOGLE ===
-SERVICE_ACCOUNT_FILE = 'credenciais.json'
+# === GOOGLE CONFIG ===
+SERVICE_ACCOUNT_FILE = 'C:\\Users\\diogo\\Desktop\\Gcloud\\credenciais.json'
 SPREADSHEET_ID = '13_q2iGwqjpyY6JaCREiaJdeSqF9ZyRb7wvzGp9XcKNQ'
 SHEET_NAME = 'ConsultarOcorrencias'
-import os
-# === CONFIGURAÇÕES DO WEBSERVICE ===
+
+# === API SOAP CONFIG ===
 wsdl_url = 'https://intelligenza.multidadosti.com.br/_vmulti_c/webservices/index.php/?wsdl'
 params_base = {
-    'USUARIO_WS': os.getenv('USUARIO_WS'),
-    'SENHA_WS': os.getenv('SENHA_WS'),
-
-    'TIPO_DATA': 'data_abertura',
+    'USUARIO_WS': 'diogo.martini',
+    'SENHA_WS': 'Diedeia@01',
+    'TIPO_DATA': 'ultima_modificacao',
     'RETORNO': 'json',
     'CAMPOS': (
         'data_abertura,prioridade_desc,numero,idcamposvariaveis_572,idocorrencia_parent,'
@@ -30,22 +29,17 @@ params_base = {
     'CODIGO_AUXILIAR_CLIENTE': '',
 }
 
-# === ESCOPOS DO GOOGLE ===
+# === GOOGLE AUTH ===
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
-
-# === AUTENTICAÇÃO GOOGLE ===
-credentials = service_account.Credentials.from_service_account_file(
-    SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+credentials = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 sheets_service = build('sheets', 'v4', credentials=credentials)
 
-# === FUNÇÃO PARA EXTRAIR DATA/HORA REMOVENDO TAGS HTML ===
-def extrair_data_hora(html_str):
-    if not isinstance(html_str, str):
+# === FUNÇÕES ===
+def limpar_html(texto):
+    if not isinstance(texto, str):
         return ''
-    texto_limpo = re.sub(r'<.*?>', '', html_str)
-    return texto_limpo.strip().split()[0]
+    return re.sub(r'<.*?>', '', texto).replace('\xa0', ' ').strip()
 
-# === FUNÇÃO PARA FORMATAR DATAS ===
 def formatar_data(valor):
     try:
         data = pd.to_datetime(valor, dayfirst=True)
@@ -53,157 +47,130 @@ def formatar_data(valor):
     except:
         return ''
 
-# === FUNÇÃO PARA GERAR INTERVALOS MENSAIS ===
-def gerar_intervalos_mensais(data_inicio, data_fim):
-    intervalos = []
-    atual = data_inicio.replace(day=1)
-    while atual <= data_fim:
-        proximo = (atual + relativedelta(months=1)).replace(day=1)
-        fim_mes = proximo - relativedelta(seconds=1)
-        fim_mes = min(fim_mes, data_fim)
-        intervalos.append((
-            atual.strftime('%Y-%m-%d 00:00:00'),
-            fim_mes.strftime('%Y-%m-%d 23:59:59')
-        ))
-        atual = proximo
-    return intervalos
-
-# === CHAMADA DA API MÊS A MÊS ===
-client = Client(wsdl_url)
-# Calcula os últimos 14 meses
-data_fim = datetime.now()
-data_inicio = data_fim - relativedelta(months=14)
-intervalos = gerar_intervalos_mensais(data_inicio, data_fim)
-
-todos_dados = []
-for ini, fim in intervalos:
-    print(f"🔄 Consultando período: {ini} até {fim}")
-    params = params_base.copy()
-    params['DATA_INI'] = ini
-    params['DATA_FIM'] = fim
-    response = client.service.ConsultarOcorrencias(**params)
-    dados_mes = json.loads(response) if isinstance(response, str) else response
-    todos_dados.extend(dados_mes)
-
-df = pd.DataFrame(todos_dados)
-
-df['area'] = df['area'].str.strip()
-df['oco_status_simples'] = df['oco_status_simples'].str.strip()
-
-df = df[
-    df['area'].isin([
-        'Em desenvolvimento ABAP, PI, WF, WD, .NET',
-        'EC para ECP (colaboradores)',
-        'EC para Enterprise SQL/SAP IBS (colaboradores)',
-        'EC para WFS',
-        'ECP para ADP',
-        'ECP para EC (CIPA, Demais estabilidades)',
-        'ECP para Enterprise SQL (ficha financeira)',
-        'ECP para SAP IBS (contábil)',
-        'ECP para Senior (férias)',
-        'ECP para SOC (Unidade, Setor, Cargo, Hierarquia, M',
-        'ECP para Vacation Control (contingente)',
-        'GDP para EC (onboarding)',
-        'Integração ALE',
-        'Senior para ECP (ausências)',
-        'Senior para ECP (fechamento ponto)',
-        'SOC para ECP (Atestados, CIPA)',
-        'WFS para ADP',
-        'WFS para ECP',
-        'WFS para Senior',
-        'SFSF Integrations - EC Payroll, Boomi/SCI, API'
-    ]) & 
-    (~df['oco_status_simples'].isin(['Encerrada', 'Ocorrência Cancelada']))
+# === DEFINIR COLUNAS PADRÃO ===
+colunas = [
+    "Data/Hora abertura", "Prioridade", "N.º", "Código Sistema de Chamados do Cliente",
+    "OC Pai : N.º", "Cliente", "Aberto por", "Descrição", "Divisão", "Status",
+    "Operador responsável", "SLA de resposta", "Status do SLA de resposta", "SLA de solução",
+    "Status do SLA de solução", "Idade da Ocorrência", "Tempo de dependência do usuario", "Projeto",
+    "Solicitação", "Data/Hora da Última modificação", "Email do Contato do Cliente", "Data/hora de encerramento",
+    "Horas Lançadas (em minutos)", "Cnt. Status : CLIENTE - Aguardando Retorno",
+    "Cnt. Status : INTELLIGENZA - Feedback Retornado", "Cnt. Status : INTELLIGENZA - Feedback retornado do cliente",
+    "Status (sem tempo decorrido)", "Data de Vencimento do SLA de Solução"
 ]
 
-# === FORMATAÇÃO E LIMPEZA DE COLUNAS ===
-if 'data_abertura' in df.columns:
-    df['data_abertura'] = df['data_abertura'].apply(formatar_data)
+# === CONSULTAR DADOS MODIFICADOS HOJE ===
+inicio = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+fim = inicio + timedelta(days=1) - timedelta(seconds=1)
 
-for col in ['vencimento_sla_solucao', 'sla_solucao_horas', 'sla_solucao', 'sla_resp_horas', 'sla_resposta']:
-    if col in df.columns:
-        df[col] = df[col].apply(extrair_data_hora)
+params = params_base.copy()
+params['DATA_INI'] = inicio.strftime('%Y-%m-%d %H:%M:%S')
+params['DATA_FIM'] = fim.strftime('%Y-%m-%d %H:%M:%S')
 
-if 'vencimento_sla_solucao' in df.columns:
-    df['vencimento_sla_solucao'] = df['vencimento_sla_solucao'].apply(formatar_data)
+print(f"🔄 Consultando ocorrências modificadas entre {params['DATA_INI']} e {params['DATA_FIM']}...")
+client = Client(wsdl_url)
+response = client.service.ConsultarOcorrencias(**params)
+dados_novos = json.loads(response) if isinstance(response, str) else response
+df_novo = pd.DataFrame(dados_novos)
 
-# === REORGANIZAR E RENOMEAR COLUNAS ===
-df = df[[ 
-    "data_abertura","prioridade_desc","numero","idcamposvariaveis_572","idocorrencia_parent",
-    "cliente_nome","aberto_por","descricao","area","oco_status","operador_responsavel",
-    "sla_resposta","sla_resp_horas","sla_solucao","sla_solucao_horas","idade_oc","tempo_dependencia_user",
-    "nome_projeto","problema","hora_ultima_modificacao","contato_email","data_fechamento",
-    "horas_lancadas","stat_cnt_16","stat_cnt_100","stat_cnt_5017", "oco_status_simples","vencimento_sla_solucao"
-]]
+# === APLICAR FILTROS ===
+if not df_novo.empty:
+    df_novo['area'] = df_novo['area'].str.strip()
+    df_novo['oco_status_simples'] = df_novo['oco_status_simples'].str.strip()
 
-df.rename(columns={
-    "data_abertura": "Data/Hora abertura",
-    "prioridade_desc": "Prioridade",
-    "numero": "N.º",
-    "idcamposvariaveis_572": "Código Sistema de Chamados do Cliente",
-    "idocorrencia_parent": "OC Pai : N.º",
-    "cliente_nome": "Cliente",
-    "aberto_por": "Aberto por",
-    "descricao": "Descrição",
-    "area": "Divisão",
-    "oco_status": "Status",
-    "operador_responsavel": "Operador responsável",
-    "sla_resposta": "SLA de resposta",
-    "sla_resp_horas": "Status do SLA de resposta",
-    "sla_solucao": "SLA de solução",
-    "sla_solucao_horas": "Status do SLA de solução",
-    "idade_oc": "Idade da Ocorrência",
-    "tempo_dependencia_user": "Tempo de dependência do usuario",
-    "nome_projeto": "Projeto",
-    "problema": "Solicitação",
-    "hora_ultima_modificacao": "Data/Hora da Última modificação",
-    "contato_email": "Email do Contato do Cliente",
-    "data_fechamento": "Data/hora de encerramento",
-    "horas_lancadas": "Horas Lançadas (em minutos)",
-    "stat_cnt_16": "Cnt. Status : CLIENTE - Aguardando Retorno",
-    "stat_cnt_100": "Cnt. Status : INTELLIGENZA - Feedback Retornado",
-    "stat_cnt_5017": "Cnt. Status : INTELLIGENZA - Feedback retornado do cliente",
-    "oco_status_simples": "Status (sem tempo decorrido)",
-    "vencimento_sla_solucao": "Data de Vencimento do SLA de Solução"
-}, inplace=True)
+    areas_permitidas = [
+        'Em desenvolvimento ABAP, PI, WF, WD, .NET', 'EC para ECP (colaboradores)',
+        'EC para Enterprise SQL/SAP IBS (colaboradores)', 'EC para WFS', 'ECP para ADP',
+        'ECP para EC (CIPA, Demais estabilidades)', 'ECP para Enterprise SQL (ficha financeira)',
+        'ECP para SAP IBS (contábil)', 'ECP para Senior (férias)', 'ECP para SOC (Unidade, Setor, Cargo, Hierarquia, M',
+        'ECP para Vacation Control (contingente)', 'GDP para EC (onboarding)', 'Integração ALE',
+        'Senior para ECP (ausências)', 'Senior para ECP (fechamento ponto)',
+        'SOC para ECP (Atestados, CIPA)', 'WFS para ADP', 'WFS para ECP', 'WFS para Senior',
+        'SFSF Integrations - EC Payroll, Boomi/SCI, API'
+    ]
 
-# === TRATAR VALORES AUSENTES ===
-df = df.fillna('')
+    df_novo = df_novo[
+        df_novo['area'].isin(areas_permitidas) &
+        (~df_novo['oco_status_simples'].isin(['Encerrada', 'Ocorrência Cancelada']))
+    ]
 
-# === PREPARAR E ENVIAR PARA O GOOGLE SHEETS ===
-values = [df.columns.tolist()] + df.values.tolist()
+    # FORMATAR CAMPOS
+    campos_data = ['data_abertura', 'vencimento_sla_solucao', 'data_fechamento']
+    for campo in campos_data:
+        if campo in df_novo.columns:
+            df_novo[campo] = df_novo[campo].apply(limpar_html).apply(formatar_data)
 
-sheets_service.spreadsheets().values().clear(
-    spreadsheetId=SPREADSHEET_ID,
-    range=SHEET_NAME
-).execute()
+    for campo in ['sla_solucao_horas', 'sla_solucao', 'sla_resp_horas', 'sla_resposta']:
+        if campo in df_novo.columns:
+            df_novo[campo] = df_novo[campo].apply(limpar_html)
 
-sheets_service.spreadsheets().values().update(
-    spreadsheetId=SPREADSHEET_ID,
-    range=SHEET_NAME + '!A1',
-    valueInputOption='RAW',
-    body={'values': values}
-).execute()
+    # RENOMEAR COLUNAS
+    df_novo = df_novo.rename(columns={
+        "data_abertura": "Data/Hora abertura", "prioridade_desc": "Prioridade", "numero": "N.º",
+        "idcamposvariaveis_572": "Código Sistema de Chamados do Cliente", "idocorrencia_parent": "OC Pai : N.º",
+        "cliente_nome": "Cliente", "aberto_por": "Aberto por", "descricao": "Descrição", "area": "Divisão",
+        "oco_status": "Status", "operador_responsavel": "Operador responsável", "sla_resposta": "SLA de resposta",
+        "sla_resp_horas": "Status do SLA de resposta", "sla_solucao": "SLA de solução",
+        "sla_solucao_horas": "Status do SLA de solução", "idade_oc": "Idade da Ocorrência",
+        "tempo_dependencia_user": "Tempo de dependência do usuario", "nome_projeto": "Projeto",
+        "problema": "Solicitação", "hora_ultima_modificacao": "Data/Hora da Última modificação",
+        "contato_email": "Email do Contato do Cliente", "data_fechamento": "Data/hora de encerramento",
+        "horas_lancadas": "Horas Lançadas (em minutos)", "stat_cnt_16": "Cnt. Status : CLIENTE - Aguardando Retorno",
+        "stat_cnt_100": "Cnt. Status : INTELLIGENZA - Feedback Retornado",
+        "stat_cnt_5017": "Cnt. Status : INTELLIGENZA - Feedback retornado do cliente",
+        "oco_status_simples": "Status (sem tempo decorrido)", "vencimento_sla_solucao": "Data de Vencimento do SLA de Solução"
+    })[colunas]
 
-print("✅ Planilha atualizada com sucesso!")
+    # === LER DADOS EXISTENTES ===
+    resultado = sheets_service.spreadsheets().values().get(
+        spreadsheetId=SPREADSHEET_ID,
+        range=f"{SHEET_NAME}!A2:AB"
+    ).execute()
 
-from datetime import datetime
-from zoneinfo import ZoneInfo
+    dados_planilha = resultado.get('values', [])
+    for linha in dados_planilha:
+        while len(linha) < len(colunas):
+            linha.append('')
+    df_existente = pd.DataFrame(dados_planilha, columns=colunas)
+    df_existente['N.º'] = df_existente['N.º'].astype(str)
+    df_novo['N.º'] = df_novo['N.º'].astype(str)
 
-ultima_modificacao = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime('%Y-%m-%d %H:%M:%S')
+    # === REMOVER CANCELADOS / ENCERRADOS DO EXISTENTE ===
+    df_final = df_existente[~df_existente['N.º'].isin(df_novo['N.º'])]
+    df_final = pd.concat([df_final, df_novo], ignore_index=True)
+    df_final = df_final.drop_duplicates(subset=['N.º'], keep='last').sort_values(by="Data/Hora abertura")
+    df_final = df_final.fillna('')
+    valores = [colunas] + df_final.values.tolist()
 
-# Atualiza o cabeçalho (opcional, só se quiser garantir que esteja sempre)
-sheets_service.spreadsheets().values().update(
-    spreadsheetId=SPREADSHEET_ID,
-    range='metadata!A1',
-    valueInputOption='RAW',
-    body={'values': [['ÚltimaAtualizacao']]}
-).execute()
+    # === ESCREVER PLANILHA ===
+    sheets_service.spreadsheets().values().clear(
+        spreadsheetId=SPREADSHEET_ID, range=SHEET_NAME
+    ).execute()
 
-# Atualiza o valor do timestamp na célula A2
-sheets_service.spreadsheets().values().update(
-    spreadsheetId=SPREADSHEET_ID,
-    range='metadata!A2',
-    valueInputOption='RAW',
-    body={'values': [[ultima_modificacao]]}
-).execute()
+    sheets_service.spreadsheets().values().update(
+        spreadsheetId=SPREADSHEET_ID,
+        range=f"{SHEET_NAME}!A1",
+        valueInputOption='RAW',
+        body={'values': valores}
+    ).execute()
+
+    print(f"✅ Planilha atualizada com {len(df_final)} registros.")
+
+    # === ATUALIZAR METADATA ===
+    ultima_mod = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    sheets_service.spreadsheets().values().update(
+        spreadsheetId=SPREADSHEET_ID,
+        range='metadata!A1',
+        valueInputOption='RAW',
+        body={'values': [['ÚltimaAtualizacao']]}
+    ).execute()
+    sheets_service.spreadsheets().values().update(
+        spreadsheetId=SPREADSHEET_ID,
+        range='metadata!A2',
+        valueInputOption='RAW',
+        body={'values': [[ultima_mod]]}
+    ).execute()
+
+    print(f"📅 Metadata atualizada: {ultima_mod}")
+else:
+    print("⚠️ Nenhuma ocorrência nova/modificada hoje.")
