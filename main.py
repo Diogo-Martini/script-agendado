@@ -181,6 +181,7 @@ else:
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+import time
 
 report_url = "https://lookerstudio.google.com/reporting/66ffcb7a-b341-49d0-8438-d7a66ddd9c0c/page/L7OLF"
 
