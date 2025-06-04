@@ -172,7 +172,7 @@ if not df_novo.empty:
         spreadsheetId=SPREADSHEET_ID,
         range='metadata!A2',
         valueInputOption='RAW',
-        body={'values': [[ultima_mod]]}
+        body={'values': [[ultima_modificacao]]}
     ).execute()
 
     print(f"📅 Metadata atualizada: {ultima_mod}")
