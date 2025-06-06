@@ -1,0 +1,34 @@
+name: 1 - Executar script Python a cada 8 minutos
+
+on:
+  schedule:
+    - cron: "0 10 * * 1-5"
+  workflow_dispatch:  # Permite executar manualmente
+
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🔄 Clonar o repositório
+        uses: actions/checkout@v3
+
+      - name: 🐍 Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: 📦 Instalar dependências
+        run: |
+          pip install pandas zeep google-auth google-api-python-client python-dateutil
+
+      - name: 🔐 Criar credenciais do Google
+        run: |
+          echo '${{ secrets.GOOGLE_CREDS }}' > credenciais.json
+          
+      - name: ▶️ Executar o script
+        env:
+          USUARIO_WS: ${{ secrets.USUARIO_WS }}
+          SENHA_WS: ${{ secrets.SENHA_WS }}
+        run: python main_old.py
