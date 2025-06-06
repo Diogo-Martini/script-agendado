@@ -6,6 +6,7 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 import re
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 # === GOOGLE CONFIG ===
 SERVICE_ACCOUNT_FILE = 'credenciais.json'
