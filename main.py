@@ -59,8 +59,8 @@ colunas = [
     "Status (sem tempo decorrido)", "Data de Vencimento do SLA de Solução"
 ]
 
-# === CONSULTAR DADOS MODIFICADOS HOJE ===
-inicio = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+# === CONSULTAR DADOS MODIFICADOS DESDE ONTEM ===
+inicio = (datetime.now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
 fim = inicio + timedelta(days=2) - timedelta(seconds=1)
 
 params = params_base.copy()
@@ -70,41 +70,17 @@ params['DATA_FIM'] = fim.strftime('%Y-%m-%d %H:%M:%S')
 print(f"🔄 Consultando ocorrências modificadas entre {params['DATA_INI']} e {params['DATA_FIM']}...")
 client = Client(wsdl_url)
 response = client.service.ConsultarOcorrencias(**params)
-dados_novos = json.loads(response) if isinstance(response, str) else response
+
+dados_novos = json.loads(response) if isinstance(response, str) and response.strip() else response
 df_novo = pd.DataFrame(dados_novos)
 
-# === APLICAR FILTROS ===
 if not df_novo.empty:
-    df_novo['area'] = df_novo['area'].str.strip()
-    df_novo['oco_status_simples'] = df_novo['oco_status_simples'].str.strip()
-
-    areas_permitidas = [
-        'Em desenvolvimento ABAP, PI, WF, WD, .NET', 'EC para ECP (colaboradores)',
-        'EC para Enterprise SQL/SAP IBS (colaboradores)', 'EC para WFS', 'ECP para ADP',
-        'ECP para EC (CIPA, Demais estabilidades)', 'ECP para Enterprise SQL (ficha financeira)',
-        'ECP para SAP IBS (contábil)', 'ECP para Senior (férias)', 'ECP para SOC (Unidade, Setor, Cargo, Hierarquia, M',
-        'ECP para Vacation Control (contingente)', 'GDP para EC (onboarding)', 'Integração ALE',
-        'Senior para ECP (ausências)', 'Senior para ECP (fechamento ponto)',
-        'SOC para ECP (Atestados, CIPA)', 'WFS para ADP', 'WFS para ECP', 'WFS para Senior',
-        'SFSF Integrations - EC Payroll, Boomi/SCI, API'
-    ]
-
-    df_novo = df_novo[
-        df_novo['area'].isin(areas_permitidas) &
-        (~df_novo['oco_status_simples'].isin(['Encerrada', 'Ocorrência Cancelada']))
-    ]
-
-    # FORMATAR CAMPOS
-    campos_data = ['data_abertura', 'vencimento_sla_solucao', 'data_fechamento']
-    for campo in campos_data:
+    # Limpar e formatar dados
+    df_novo = df_novo.applymap(limpar_html)
+    for campo in ['data_abertura', 'vencimento_sla_solucao', 'data_fechamento']:
         if campo in df_novo.columns:
-            df_novo[campo] = df_novo[campo].apply(limpar_html).apply(formatar_data)
+            df_novo[campo] = df_novo[campo].apply(formatar_data)
 
-    for campo in ['sla_solucao_horas', 'sla_solucao', 'sla_resp_horas', 'sla_resposta']:
-        if campo in df_novo.columns:
-            df_novo[campo] = df_novo[campo].apply(limpar_html)
-
-    # RENOMEAR COLUNAS
     df_novo = df_novo.rename(columns={
         "data_abertura": "Data/Hora abertura", "prioridade_desc": "Prioridade", "numero": "N.º",
         "idcamposvariaveis_572": "Código Sistema de Chamados do Cliente", "idocorrencia_parent": "OC Pai : N.º",
@@ -132,17 +108,36 @@ if not df_novo.empty:
         while len(linha) < len(colunas):
             linha.append('')
     df_existente = pd.DataFrame(dados_planilha, columns=colunas)
+
     df_existente['N.º'] = df_existente['N.º'].astype(str)
     df_novo['N.º'] = df_novo['N.º'].astype(str)
 
-    # === REMOVER CANCELADOS / ENCERRADOS DO EXISTENTE ===
+    # === ATUALIZAR REGISTROS EXISTENTES COM OS MODIFICADOS ===
     df_final = df_existente[~df_existente['N.º'].isin(df_novo['N.º'])]
     df_final = pd.concat([df_final, df_novo], ignore_index=True)
+
+    # === APLICAR FILTROS APÓS ATUALIZAR ===
+    areas_permitidas = [
+        'Em desenvolvimento ABAP, PI, WF, WD, .NET', 'EC para ECP (colaboradores)',
+        'EC para Enterprise SQL/SAP IBS (colaboradores)', 'EC para WFS', 'ECP para ADP',
+        'ECP para EC (CIPA, Demais estabilidades)', 'ECP para Enterprise SQL (ficha financeira)',
+        'ECP para SAP IBS (contábil)', 'ECP para Senior (férias)', 'ECP para SOC (Unidade, Setor, Cargo, Hierarquia, M',
+        'ECP para Vacation Control (contingente)', 'GDP para EC (onboarding)', 'Integração ALE',
+        'Senior para ECP (ausências)', 'Senior para ECP (fechamento ponto)',
+        'SOC para ECP (Atestados, CIPA)', 'WFS para ADP', 'WFS para ECP', 'WFS para Senior',
+        'SFSF Integrations - EC Payroll, Boomi/SCI, API'
+    ]
+
+    df_final = df_final[
+        df_final['Divisão'].isin(areas_permitidas) &
+        (~df_final['Status (sem tempo decorrido)'].isin(['Encerrada', 'Ocorrência Cancelada']))
+    ]
+
+    # === REMOVER DUPLICADOS, ORDENAR E ESCREVER PLANILHA ===
     df_final = df_final.drop_duplicates(subset=['N.º'], keep='last').sort_values(by="Data/Hora abertura")
     df_final = df_final.fillna('')
     valores = [colunas] + df_final.values.tolist()
 
-    # === ESCREVER PLANILHA ===
     sheets_service.spreadsheets().values().clear(
         spreadsheetId=SPREADSHEET_ID, range=SHEET_NAME
     ).execute()
@@ -157,11 +152,7 @@ if not df_novo.empty:
     print(f"✅ Planilha atualizada com {len(df_final)} registros.")
 
     # === ATUALIZAR METADATA ===
-    from datetime import datetime
-    from zoneinfo import ZoneInfo
-
     ultima_modificacao = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime('%Y-%m-%d %H:%M:%S')
-
     sheets_service.spreadsheets().values().update(
         spreadsheetId=SPREADSHEET_ID,
         range='metadata!A1',
