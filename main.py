@@ -126,7 +126,7 @@ if not df_novo.empty:
         'ECP para Vacation Control (contingente)', 'GDP para EC (onboarding)', 'Integração ALE',
         'Senior para ECP (ausências)', 'Senior para ECP (fechamento ponto)',
         'SOC para ECP (Atestados, CIPA)', 'WFS para ADP', 'WFS para ECP', 'WFS para Senior',
-        'SFSF Integrations - EC Payroll, Boomi/SCI, API'
+        'SFSF Integrations - EC Payroll, Boomi/SCI, API, R - Integrations - EC Payroll, Boomi/SCI, API'
     ]
 
     df_final = df_final[
