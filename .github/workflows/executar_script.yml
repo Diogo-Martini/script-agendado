@@ -33,4 +33,4 @@ jobs:
         env:
           USUARIO_WS: ${{ secrets.USUARIO_WS }}
           SENHA_WS: ${{ secrets.SENHA_WS }}
-        run: python main_old.py
+        run: python main.py
