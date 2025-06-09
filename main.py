@@ -61,7 +61,7 @@ colunas = [
 ]
 
 # === CONSULTAR DADOS MODIFICADOS DESDE ONTEM ===
-inicio = (datetime.now() - timedelta(days=400)).replace(hour=0, minute=0, second=0, microsecond=0)
+inicio = (datetime.now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
 fim = inicio + timedelta(days=2) - timedelta(seconds=1)
 
 params = params_base.copy()
