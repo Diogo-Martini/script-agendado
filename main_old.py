@@ -112,6 +112,7 @@ df = df[
         'WFS para ECP',
         'WFS para Senior',
         'SFSF Integrations - EC Payroll, Boomi/SCI, API'
+        'R - Integrations - EC Payroll, Boomi/SCI, API'
     ]) & 
     (~df['oco_status_simples'].isin(['Encerrada', 'Ocorrência Cancelada']))
 ]
