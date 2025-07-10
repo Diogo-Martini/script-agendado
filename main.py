@@ -25,7 +25,7 @@ params_base = {
         'cliente_nome,aberto_por,descricao,area,oco_status,operador_responsavel,'
         'sla_resposta,sla_resp_horas,sla_solucao,sla_solucao_horas,idade_oc,tempo_dependencia_user,nome_projeto,'
         'problema,hora_ultima_modificacao,contato_email,data_fechamento,'
-        'horas_lancadas,stat_cnt_16,stat_cnt_100,stat_cnt_5017,oco_status_simples,vencimento_sla_solucao'
+        'horas_lancadas,stat_cnt_16,stat_cnt_100,stat_cnt_5017,oco_status_simples,vencimento_sla_solucao,resposta_dentro_sla,solucao_dentro_sla'
     ),
     'CODIGO_AUXILIAR_CLIENTE': '',
 }
@@ -57,7 +57,7 @@ colunas = [
     "Solicitação", "Data/Hora da Última modificação", "Email do Contato do Cliente", "Data/hora de encerramento",
     "Horas Lançadas (em minutos)", "Cnt. Status : CLIENTE - Aguardando Retorno",
     "Cnt. Status : INTELLIGENZA - Feedback Retornado", "Cnt. Status : INTELLIGENZA - Feedback retornado do cliente",
-    "Status (sem tempo decorrido)", "Data de Vencimento do SLA de Solução"
+    "Status (sem tempo decorrido)", "Data de Vencimento do SLA de Solução", "Resposta dentro do SLA","Solução dentro do SLA"
 ]
 
 # === CONSULTAR DADOS MODIFICADOS DESDE ONTEM ===
@@ -95,7 +95,8 @@ if not df_novo.empty:
         "horas_lancadas": "Horas Lançadas (em minutos)", "stat_cnt_16": "Cnt. Status : CLIENTE - Aguardando Retorno",
         "stat_cnt_100": "Cnt. Status : INTELLIGENZA - Feedback Retornado",
         "stat_cnt_5017": "Cnt. Status : INTELLIGENZA - Feedback retornado do cliente",
-        "oco_status_simples": "Status (sem tempo decorrido)", "vencimento_sla_solucao": "Data de Vencimento do SLA de Solução"
+        "oco_status_simples": "Status (sem tempo decorrido)", "vencimento_sla_solucao": "Data de Vencimento do SLA de Solução",
+        "resposta_dentro_sla": "Resposta dentro do SLA", "solucao_dentro_sla": "Solução dentro do SLA"
     })[colunas]
 
     # === LER DADOS EXISTENTES ===
