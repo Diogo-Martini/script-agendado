@@ -22,7 +22,7 @@ params_base = {
     'RETORNO': 'json',
     'CAMPOS': (
         'data_abertura,prioridade_desc,numero,idcamposvariaveis_572,idocorrencia_parent,'
-        'cliente_nome,aberto_por,descricao,area,oco_status,operador_responsavel,'
+        'cliente_nome,aberto_por,descricao,area,oco_status,operador_responsavel_logado,'
         'sla_resposta,sla_resp_horas,sla_solucao,sla_solucao_horas,idade_oc,tempo_dependencia_user,nome_projeto,'
         'problema,hora_ultima_modificacao,contato_email,data_fechamento,'
         'horas_lancadas,stat_cnt_16,stat_cnt_100,stat_cnt_5017,oco_status_simples,vencimento_sla_solucao,resposta_dentro_sla,solucao_dentro_sla'
@@ -86,7 +86,7 @@ if not df_novo.empty:
         "data_abertura": "Data/Hora abertura", "prioridade_desc": "Prioridade", "numero": "N.º",
         "idcamposvariaveis_572": "Código Sistema de Chamados do Cliente", "idocorrencia_parent": "OC Pai : N.º",
         "cliente_nome": "Cliente", "aberto_por": "Aberto por", "descricao": "Descrição", "area": "Divisão",
-        "oco_status": "Status", "operador_responsavel": "Operador responsável", "sla_resposta": "SLA de resposta",
+        "oco_status": "Status", "operador_responsavel_logado": "Operador responsável", "sla_resposta": "SLA de resposta",
         "sla_resp_horas": "Status do SLA de resposta", "sla_solucao": "SLA de solução",
         "sla_solucao_horas": "Status do SLA de solução", "idade_oc": "Idade da Ocorrência",
         "tempo_dependencia_user": "Tempo de dependência do usuario", "nome_projeto": "Projeto",
@@ -171,3 +171,4 @@ if not df_novo.empty:
     print(f"📅 Metadata atualizada: {ultima_modificacao}")
 else:
     print("⚠️ Nenhuma ocorrência nova/modificada hoje.")
+
