@@ -132,7 +132,7 @@ if not df_novo.empty:
 
     df_final = df_final[
         df_final['Divisão'].isin(areas_permitidas) &
-        (~df_final['Status (sem tempo decorrido)'].isin(['Encerrada', 'Ocorrência Cancelada']))
+        (~df_final['Status (sem tempo decorrido)'].isin(['Encerrada', 'Ocorrência Cancelada', 'Encerrar SUB-Ocorrência']))
     ]
 
     # === REMOVER DUPLICADOS, ORDENAR E ESCREVER PLANILHA ===
@@ -171,4 +171,5 @@ if not df_novo.empty:
     print(f"📅 Metadata atualizada: {ultima_modificacao}")
 else:
     print("⚠️ Nenhuma ocorrência nova/modificada hoje.")
+
 
