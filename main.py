@@ -127,7 +127,8 @@ if not df_novo.empty:
         'ECP para SAP IBS (contábil)', 'ECP para Senior (férias)', 'ECP para SOC (Unidade, Setor, Cargo, Hierarquia, M',
         'ECP para Vacation Control (contingente)', 'GDP para EC (onboarding)', 'Integração ALE',
         'Senior para ECP (ausências)', 'Senior para ECP (fechamento ponto)',
-        'SOC para ECP (Atestados, CIPA)', 'WFS para ADP', 'WFS para ECP', 'WFS para Senior',
+    #    'SOC para ECP (Atestados, CIPA)', 
+        'WFS para ADP', 'WFS para ECP', 'WFS para Senior',
         'SFSF Integrations - EC Payroll, Boomi/SCI, API', 'R - Integrations - EC Payroll, Boomi/SCI, API'
     ]
 
@@ -172,6 +173,7 @@ if not df_novo.empty:
     print(f"📅 Metadata atualizada: {ultima_modificacao}")
 else:
     print("⚠️ Nenhuma ocorrência nova/modificada hoje.")
+
 
 
 
