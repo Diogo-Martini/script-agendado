@@ -23,7 +23,7 @@ jobs:
 
       - name: 📦 Instalar dependências
         run: |
-          pip install pandas zeep google-auth google-api-python-client python-dateutil
+          pip install pandas zeep packaging google-auth google-api-python-client python-dateutil
 
       - name: 🔐 Criar credenciais do Google
         run: |
