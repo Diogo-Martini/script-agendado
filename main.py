@@ -24,7 +24,6 @@ SOAP_ENV = "http://schemas.xmlsoap.org/soap/envelope/"
 USUARIO_WS = os.getenv("USUARIO_WS")
 SENHA_WS = os.getenv("SENHA_WS")
 
-# === CAMPOS QUE VOCÊ QUER TRAZER ===
 CAMPOS = (
     "data_abertura,prioridade_desc,numero,idcamposvariaveis_572,idocorrencia_parent,"
     "cliente_nome,aberto_por,descricao,area,oco_status,operador_responsavel_logado,"
@@ -34,8 +33,7 @@ CAMPOS = (
     "vencimento_sla_solucao,resposta_dentro_sla,solucao_dentro_sla"
 )
 
-# === JANELA DE CONSULTA ===
-# ontem 00:00 até amanhã 23:59:59
+# janela de consulta (ontem 00:00 até amanhã 23:59:59)
 inicio = (datetime.now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
 fim = inicio + timedelta(days=2) - timedelta(seconds=1)
 
@@ -45,18 +43,7 @@ DATA_FIM = fim.strftime('%Y-%m-%d %H:%M:%S')
 print(f"🔄 Consultando ocorrências modificadas entre {DATA_INI} e {DATA_FIM}...")
 
 
-# === MONTAÇÃO DO ENVELOPE SOAP ===
 def montar_envelope():
-    # IMPORTANTE: o WSDL mostra que os parâmetros vão como partes do método ConsultarOcorrencias,
-    # não dentro de "request"/"payload" etc. É RPC style:
-    #
-    # <ConsultarOcorrencias>
-    #   <USUARIO_WS>...</USUARIO_WS>
-    #   <SENHA_WS>...</SENHA_WS>
-    #   ...
-    # </ConsultarOcorrencias>
-    #
-    # Vamos gerar isso dinamicamente.
     body_inner = f"""
         <USUARIO_WS>{USUARIO_WS}</USUARIO_WS>
         <SENHA_WS>{SENHA_WS}</SENHA_WS>
@@ -100,23 +87,19 @@ def chamar_servico():
             f"Resposta (início): {resp.text[:500]}"
         )
 
+    # garantir que o requests não tente adivinhar encoding errado
+    # mas se o servidor já mandou ISO-8859-1 como no seu log,
+    # resp.text já vem decodificado em unicode. Podemos usar direto.
     return resp.text
 
 
-def extrair_json_do_retorno(soap_response_text):
-    # A resposta SOAP deve ter algo como:
-    #
-    # <soapenv:Envelope ...>
-    #   <soapenv:Body>
-    #     <ns1:ConsultarOcorrenciasResponse>
-    #       <return>{"[...]": ...}</return>
-    #     </ns1:ConsultarOcorrenciasResponse>
-    #   </soapenv:Body>
-    # </soapenv:Envelope>
-    #
-    # Estratégia simples: pega o conteúdo de <return>...</return>.
-
-    m = re.search(r"<return>(.*?)</return>", soap_response_text, flags=re.DOTALL)
+def extrair_json_do_retorno(soap_response_text: str):
+    # Agora usamos regex que aceita atributos no <return ...>
+    m = re.search(
+        r"<return\b[^>]*>(.*?)</return>",
+        soap_response_text,
+        flags=re.DOTALL | re.IGNORECASE,
+    )
     if not m:
         raise RuntimeError(
             "❌ Não encontrei a tag <return> na resposta SOAP.\n"
@@ -125,12 +108,11 @@ def extrair_json_do_retorno(soap_response_text):
 
     raw = m.group(1).strip()
 
-    # às vezes vem escapado (ex: &quot; etc.). Vamos desserializar HTML entities básicas
-    # mas primeiro tenta json direto:
+    # Tenta primeiro interpretar direto como JSON
     try:
         return json.loads(raw)
     except Exception:
-        # tentar des-escape básico de XML:
+        # Se veio escapado (&quot; etc.), faz unescape básico e tenta de novo
         unescaped = (
             raw
             .replace("&quot;", '"')
@@ -139,13 +121,7 @@ def extrair_json_do_retorno(soap_response_text):
             .replace("&gt;", ">")
             .replace("&amp;", "&")
         )
-        try:
-            return json.loads(unescaped)
-        except Exception as e:
-            raise RuntimeError(
-                "❌ O conteúdo de <return> não é JSON válido.\n"
-                f"Conteúdo de <return> (início): {raw[:500]}\nErro: {e}"
-            )
+        return json.loads(unescaped)
 
 
 # === GOOGLE AUTH ===
@@ -184,21 +160,21 @@ colunas = [
 ]
 
 
-# === 1) CHAMAR O WEB SERVICE E OBTER OS DADOS ===
+# === 1) CHAMAR O WEBSERVICE E OBTER OS DADOS ===
 soap_raw = chamar_servico()
 dados_novos = extrair_json_do_retorno(soap_raw)
 
-# A resposta pode ser lista de dicts direto, ou um dict com lista dentro
+# Pode vir lista direta ou dict contendo lista
 if isinstance(dados_novos, dict):
-    # heurística: pega a primeira lista encontrada
-    lista = None
+    # tenta pegar a primeira lista em qualquer chave
+    lista_detectada = None
     for v in dados_novos.values():
         if isinstance(v, list):
-            lista = v
+            lista_detectada = v
             break
-    if lista is None:
-        lista = []
-    dados_novos = lista
+    if lista_detectada is None:
+        lista_detectada = []
+    dados_novos = lista_detectada
 
 df_novo = pd.DataFrame(dados_novos)
 
@@ -206,7 +182,7 @@ if df_novo.empty:
     print("⚠️ Nenhuma ocorrência nova/modificada hoje.")
     raise SystemExit(0)
 
-# === 2) LIMPAR CAMPOS HTML E FORMATAR DATAS ===
+# === 2) LIMPEZA E FORMATAÇÃO ===
 df_novo = df_novo.applymap(limpar_html)
 
 for campo in ['data_abertura', 'vencimento_sla_solucao', 'data_fechamento']:
@@ -246,7 +222,7 @@ df_novo = df_novo.rename(columns={
     "solucao_dentro_sla": "Solução dentro do SLA"
 })
 
-# Forçar ordem de colunas que a planilha espera
+# força ordem das colunas esperadas pela planilha
 df_novo = df_novo[colunas]
 
 # === 3) BUSCAR O QUE JÁ ESTÁ NA PLANILHA ===
