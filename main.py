@@ -1,20 +1,12 @@
 # === IMPORTS ===
-import os
-import re
-import json
 import pandas as pd
-from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
-
-from requests import Session
-from requests.adapters import HTTPAdapter
-from requests.models import Response
-
 from zeep import Client
-from zeep.transports import Transport
-
+import json
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+import re
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 # === GOOGLE CONFIG ===
 SERVICE_ACCOUNT_FILE = 'credenciais.json'
@@ -182,6 +174,7 @@ if not df_novo.empty:
     print(f"📅 Metadata atualizada: {ultima_modificacao}")
 else:
     print("⚠️ Nenhuma ocorrência nova/modificada hoje.")
+
 
 
 
