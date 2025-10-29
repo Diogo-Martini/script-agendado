@@ -8,7 +8,6 @@ from zoneinfo import ZoneInfo
 
 from requests import Session
 from requests.adapters import HTTPAdapter
-from requests.models import Response
 
 from zeep import Client
 from zeep.transports import Transport
@@ -45,46 +44,59 @@ params_base = {
 # === TRANSPORTE CUSTOM PARA BLOQUEAR schemas.xmlsoap.org ===
 class OfflineTransport(Transport):
     """
-    Subclasse de Transport que intercepta qualquer tentativa do zeep de
-    baixar schemas externos (por ex. http://schemas.xmlsoap.org/soap/encoding/)
-    e devolve um XSD stub local em memória.
+    Transport customizado que intercepta tentativas de carregar
+    http://schemas.xmlsoap.org/soap/encoding/ e devolve um schema
+    "fake" que já declara arrayType etc. Assim o zeep não tenta ir pra internet.
     """
 
     def __init__(self, *args, **kwargs):
-        # vamos ainda criar uma Session normal pra outras URLs
         if 'session' not in kwargs or kwargs['session'] is None:
             session = Session()
-            # opcional: retry básico
             adapter = HTTPAdapter(max_retries=3)
             session.mount("http://", adapter)
             session.mount("https://", adapter)
             kwargs['session'] = session
-
         super().__init__(*args, **kwargs)
 
     def _load_remote_data(self, url):
-        """
-        Este método é chamado pelo zeep quando ele precisa baixar um recurso remoto (WSDL import/XSD import).
-        A gente intercepta aqui.
-        """
-        # Se for a URL chata:
         if url.startswith("http://schemas.xmlsoap.org/soap/encoding/"):
-            # devolvemos um XSD stub mínimo que satisfaz o parser
+            # schema mais completo, com arrayType e tipos comuns
             stub_xsd = b"""<?xml version="1.0" encoding="UTF-8"?>
 <xsd:schema
     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
     targetNamespace="http://schemas.xmlsoap.org/soap/encoding/"
+    xmlns:tns="http://schemas.xmlsoap.org/soap/encoding/"
     xmlns="http://schemas.xmlsoap.org/soap/encoding/"
     elementFormDefault="qualified"
     attributeFormDefault="unqualified">
+
+    <!-- atributo arrayType que o zeep está procurando -->
+    <xsd:attribute name="arrayType" type="xsd:string"/>
+
+    <!-- alguns tipos clássicos que às vezes são referenciados -->
+    <xsd:complexType name="Array">
+        <xsd:sequence>
+            <xsd:any minOccurs="0" maxOccurs="unbounded" processContents="lax"/>
+        </xsd:sequence>
+        <xsd:attribute ref="tns:arrayType" use="optional"/>
+        <xsd:anyAttribute processContents="lax"/>
+    </xsd:complexType>
+
+    <xsd:simpleType name="base64">
+        <xsd:restriction base="xsd:base64Binary"/>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="ur-type">
+        <xsd:restriction base="xsd:anyType"/>
+    </xsd:simpleType>
+
 </xsd:schema>"""
             return stub_xsd
 
-        # caso contrário, segue o comportamento normal (chama a internet)
+        # senão, deixa o Transport padrão fazer o download normal
         return super()._load_remote_data(url)
 
 
-# cria uma instância do nosso transporte customizado
 transport = OfflineTransport()
 
 
@@ -135,18 +147,15 @@ params['DATA_FIM'] = fim.strftime('%Y-%m-%d %H:%M:%S')
 
 print(f"🔄 Consultando ocorrências modificadas entre {params['DATA_INI']} e {params['DATA_FIM']}...")
 
-# usa o nosso transporte customizado aqui
 client = Client(wsdl_url, transport=transport)
 
 response = client.service.ConsultarOcorrencias(**params)
 
-# pode voltar JSON string ou já objeto
 dados_novos = json.loads(response) if isinstance(response, str) and response.strip() else response
 df_novo = pd.DataFrame(dados_novos)
 
-
 if not df_novo.empty:
-    # Limpar e formatar dados
+    # Limpeza e datas
     df_novo = df_novo.applymap(limpar_html)
 
     for campo in ['data_abertura', 'vencimento_sla_solucao', 'data_fechamento']:
@@ -174,10 +183,9 @@ if not df_novo.empty:
         "resposta_dentro_sla": "Resposta dentro do SLA",
         "solucao_dentro_sla": "Solução dentro do SLA"
     })
-    # garantir ordem das colunas
     df_novoren = df_novoren[colunas]
 
-    # === LER DADOS EXISTENTES ===
+    # Lê dados existentes
     resultado = sheets_service.spreadsheets().values().get(
         spreadsheetId=SPREADSHEET_ID,
         range=f"{SHEET_NAME}!A2:AB"
@@ -187,17 +195,16 @@ if not df_novo.empty:
     for linha in dados_planilha:
         while len(linha) < len(colunas):
             linha.append('')
-
     df_existente = pd.DataFrame(dados_planilha, columns=colunas)
 
     df_existente['N.º'] = df_existente['N.º'].astype(str)
     df_novoren['N.º'] = df_novoren['N.º'].astype(str)
 
-    # === ATUALIZAR REGISTROS EXISTENTES COM OS MODIFICADOS ===
+    # Merge incremental
     df_final = df_existente[~df_existente['N.º'].isin(df_novoren['N.º'])]
     df_final = pd.concat([df_final, df_novoren], ignore_index=True)
 
-    # === APLICAR FILTROS APÓS ATUALIZAR ===
+    # Filtros
     areas_permitidas = [
         'Em desenvolvimento ABAP, PI, WF, WD, .NET', 'EC para ECP (colaboradores)',
         'EC para Enterprise SQL/SAP IBS (colaboradores)', 'EC para WFS', 'ECP para ADP',
@@ -222,7 +229,7 @@ if not df_novo.empty:
         ]))
     ]
 
-    # === REMOVER DUPLICADOS, ORDENAR E ESCREVER PLANILHA ===
+    # Dedup + ordenar + escrever
     df_final = (
         df_final
         .drop_duplicates(subset=['N.º'], keep='last')
@@ -246,7 +253,7 @@ if not df_novo.empty:
 
     print(f"✅ Planilha atualizada com {len(df_final)} registros.")
 
-    # === ATUALIZAR METADATA ===
+    # Metadata
     ultima_modificacao = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime('%Y-%m-%d %H:%M:%S')
 
     sheets_service.spreadsheets().values().update(
@@ -267,8 +274,3 @@ if not df_novo.empty:
 
 else:
     print("⚠️ Nenhuma ocorrência nova/modificada hoje.")
-
-
-
-
-
