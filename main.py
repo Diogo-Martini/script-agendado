@@ -58,10 +58,10 @@ class OfflineTransport(Transport):
             kwargs['session'] = session
         super().__init__(*args, **kwargs)
 
-    def _load_remote_data(self, url):
-        if url.startswith("http://schemas.xmlsoap.org/soap/encoding/"):
-            # schema mais completo, com arrayType e tipos comuns
-            stub_xsd = b"""<?xml version="1.0" encoding="UTF-8"?>
+def _load_remote_data(self, url):
+    if url.startswith("http://schemas.xmlsoap.org/soap/encoding/"):
+        # schema mais completo, com arrayType e tipos comuns
+        stub_xsd = """<?xml version="1.0" encoding="UTF-8"?>
 <xsd:schema
     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
     targetNamespace="http://schemas.xmlsoap.org/soap/encoding/"
@@ -70,10 +70,8 @@ class OfflineTransport(Transport):
     elementFormDefault="qualified"
     attributeFormDefault="unqualified">
 
-    <!-- atributo arrayType que o zeep está procurando -->
     <xsd:attribute name="arrayType" type="xsd:string"/>
 
-    <!-- alguns tipos clássicos que às vezes são referenciados -->
     <xsd:complexType name="Array">
         <xsd:sequence>
             <xsd:any minOccurs="0" maxOccurs="unbounded" processContents="lax"/>
@@ -91,10 +89,13 @@ class OfflineTransport(Transport):
     </xsd:simpleType>
 
 </xsd:schema>"""
-            return stub_xsd
 
-        # senão, deixa o Transport padrão fazer o download normal
-        return super()._load_remote_data(url)
+        # converte para bytes em UTF-8 antes de retornar
+        return stub_xsd.encode("utf-8")
+
+    # senão, deixa o Transport padrão fazer o download normal
+    return super()._load_remote_data(url)
+
 
 
 transport = OfflineTransport()
@@ -274,3 +275,4 @@ if not df_novo.empty:
 
 else:
     print("⚠️ Nenhuma ocorrência nova/modificada hoje.")
+
