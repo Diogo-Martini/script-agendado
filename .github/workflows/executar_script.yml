@@ -2,7 +2,7 @@ name: 1 - Executar script Python a cada 8 minutos
 
 on:
   schedule:
-    - cron: "00,30 * * * 1-5"   # Seg-Sex: 00 e 30 de cada hora
+    - cron: "00,30 * * * 1-5"   # Seg-Sex: minuto 00 e 30 de cada hora
     - cron: "0 18 * * 6,0"      # Sáb/Dom: 18:00
   workflow_dispatch:            # Execução manual
 
