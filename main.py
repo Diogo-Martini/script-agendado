@@ -255,7 +255,7 @@ areas_permitidas = [
     'ECP para Vacation Control (contingente)', 'GDP para EC (onboarding)', 'Integração ALE',
     'Senior para ECP (ausências)', 'Senior para ECP (fechamento ponto)',
     # 'SOC para ECP (Atestados, CIPA)',
-    'Tecnologia - Dev & Integração',
+    # 'Tecnologia - Dev & Integração',
     'WFS para ADP', 'WFS para ECP', 'WFS para Senior',
     'SFSF Integrations - EC Payroll, Boomi/SCI, API',
     'R - Integrations - EC Payroll, Boomi/SCI, API'
@@ -312,3 +312,4 @@ sheets_service.spreadsheets().values().update(
 ).execute()
 
 print(f"📅 Metadata atualizada: {ultima_modificacao}")
+
