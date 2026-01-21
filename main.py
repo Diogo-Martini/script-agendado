@@ -133,11 +133,11 @@ credentials = service_account.Credentials.from_service_account_file(
 sheets_service = build('sheets', 'v4', credentials=credentials)
 
 
-def limpar_html(texto):
-    if not isinstance(texto, str):
-        return ''
-    return re.sub(r'<.*?>', '', texto).replace('\xa0', ' ').strip()
 
+def limpar_html(valor):
+    if isinstance(valor, str):
+        return re.sub('<.*?>', '', valor)
+    return valor
 
 def formatar_data(valor):
     try:
@@ -183,8 +183,7 @@ if df_novo.empty:
     raise SystemExit(0)
 
 # === 2) LIMPEZA E FORMATAÇÃO ===
-df_novo = df_novo.applymap(limpar_html)
-
+df_novo = df_novo.apply(lambda col: col.map(limpar_html))
 for campo in ['data_abertura', 'vencimento_sla_solucao', 'data_fechamento']:
     if campo in df_novo.columns:
         df_novo[campo] = df_novo[campo].apply(formatar_data)
@@ -312,4 +311,5 @@ sheets_service.spreadsheets().values().update(
 ).execute()
 
 print(f"📅 Metadata atualizada: {ultima_modificacao}")
+
 
