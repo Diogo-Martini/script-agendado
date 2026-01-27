@@ -34,7 +34,7 @@ CAMPOS = (
 )
 
 # janela de consulta (ontem 00:00 até amanhã 23:59:59)
-inicio = (datetime.now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+inicio = (datetime.now() - timedelta(days=2)).replace(hour=0, minute=0, second=0, microsecond=0)
 fim = inicio + timedelta(days=2) - timedelta(seconds=1)
 
 DATA_INI = inicio.strftime('%Y-%m-%d %H:%M:%S')
@@ -311,5 +311,6 @@ sheets_service.spreadsheets().values().update(
 ).execute()
 
 print(f"📅 Metadata atualizada: {ultima_modificacao}")
+
 
 
