@@ -246,7 +246,7 @@ df_final = pd.concat([df_final, df_novo], ignore_index=True)
 
 # === 5) FILTROS ===
 areas_permitidas = [
-    'Em desenvolvimento ABAP, PI, WF, WD, .NET', 'EC para ECP (colaboradores)',
+    'Em desenvolvimento ABAP, PI, WF, WD, .NET', 'EC para ECP (colaboradores)', 'EC para ECP'
     'EC para Enterprise SQL/SAP IBS (colaboradores)', 'EC para WFS', 'ECP para ADP',
     'ECP para EC (CIPA, Demais estabilidades)', 'ECP para Enterprise SQL (ficha financeira)',
     'ECP para SAP IBS (contábil)', 'ECP para Senior (férias)',
@@ -260,8 +260,10 @@ areas_permitidas = [
     'R - Integrations - EC Payroll, Boomi/SCI, API'
 ]
 
+padrao_areas = '|'.join(map(re.escape, areas_permitidas))
+
 df_final = df_final[
-    df_final['Divisão'].isin(areas_permitidas) &
+    df_final['Divisão'].str.contains(padrao_areas, na=False) &
     (~df_final['Status (sem tempo decorrido)'].isin([
         'Encerrada',
         'Ocorrência Cancelada',
@@ -311,6 +313,7 @@ sheets_service.spreadsheets().values().update(
 ).execute()
 
 print(f"📅 Metadata atualizada: {ultima_modificacao}")
+
 
 
 
