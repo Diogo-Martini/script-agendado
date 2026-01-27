@@ -248,7 +248,7 @@ df_final = pd.concat([df_final, df_novo], ignore_index=True)
 areas_permitidas = [
     'Em desenvolvimento ABAP, PI, WF, WD, .NET', 'EC para ECP (colaboradores)', 'EC para ECP'
     'EC para Enterprise SQL/SAP IBS (colaboradores)', 'EC para WFS', 'ECP para ADP',
-    'ECP para EC (CIPA, Demais estabilidades)', 'ECP para Enterprise SQL (ficha financeira)',
+    'ECP para EC (CIPA, Demais estabilidades)', 'ECP para Enterprise SQL (ficha financeira)', 'EC para Enterprise'
     'ECP para SAP IBS (contábil)', 'ECP para Senior (férias)',
     'ECP para SOC (Unidade, Setor, Cargo, Hierarquia, M',
     'ECP para Vacation Control (contingente)', 'GDP para EC (onboarding)', 'Integração ALE',
@@ -313,6 +313,7 @@ sheets_service.spreadsheets().values().update(
 ).execute()
 
 print(f"📅 Metadata atualizada: {ultima_modificacao}")
+
 
 
 
